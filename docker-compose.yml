@@ -1,0 +1,34 @@
+version: "3.10"
+x-node-version: &node-version node:18.18.2
+
+services:
+  database:
+    image: postgres:11-alpine
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "54321:5432"
+    volumes:
+      - ../data/postgres:/var/lib/postgresql/data
+      - pgsql-sock:/var/run/postgresql
+
+  backend:
+    image: *node-version
+    environment:
+      - HOME=/tmp
+      - NODE_ENV=development
+    volumes:
+      - .:/app
+    working_dir: /app
+    ports:
+      - ${BE_DBG_PORT:-9229}:9229
+      - ${BE_APP_PORT:-3000}:3000
+    command: bash -c "yarn && yarn run start:dev"
+
+volumes:
+  pgdata:
+  pgsql-sock:
