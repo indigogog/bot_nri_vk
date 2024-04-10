@@ -24,7 +24,8 @@ export class CreateUserRequestScene {
     private readonly requestService: UserRequestService,
     private readonly afficheService: AfficheService,
     private readonly userService: UserService,
-  ) {}
+  ) {
+  }
 
   @SceneEnter()
   async onSceneEnter() {
@@ -198,6 +199,8 @@ export class CreateUserRequestScene {
       userComment: context.scene.state.userComment,
       afficheId: Number(context.scene.state.selectedAfficheId),
     });
+
+    context.scene.state.userComment = undefined;
 
     context.send('Вы записаны');
 

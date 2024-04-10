@@ -75,6 +75,9 @@ export class EchoUpdate {
 
   @Hears(['Начать', 'start'])
   async onStartCommand(@Ctx() ctx: MessageContext) {
+    if (ctx.isChat || ctx.peerType === 'chat') {
+      return;
+    }
     const check = await this.checkSubAndUser(ctx);
     if (check) {
       ctx.scene.enter(ScenesNamesEnum.firstScene);
@@ -90,6 +93,9 @@ export class EchoUpdate {
 
   @Hears(['Я подписался'])
   async onSubs(@Ctx() ctx: MessageContext) {
+    if (ctx.isChat || ctx.peerType === 'chat') {
+      return;
+    }
     const check = await this.checkSubAndUser(ctx);
     if (check) {
       return ctx.scene.enter(ScenesNamesEnum.firstScene);
@@ -103,22 +109,11 @@ export class EchoUpdate {
     }
   }
 
-  // @Hears('Панель админа')
-  // async onAdminCommand(@Ctx() ctx: MessageContext) {
-  //   ctx.scene.enter(ScenesNamesEnum.adminMainScene);
-  // }
-
-  // @Hears('/sub')
-  // async onSubscriberCommand(@Ctx() ctx: MessageContext) {
-  //   const isSib = await this.bot.api.groups.isMember({
-  //     group_id: String(this.groupId),
-  //     user_id: ctx.senderId,
-  //   });
-  //   return isSib ? 'You sub' : 'No sub';
-  // }
-
   @HearFallback()
   onHearFallback(@Ctx() ctx: MessageContext) {
+    if (ctx.isChat || ctx.peerType === 'chat') {
+      return;
+    }
     const ADMIN_IDS = process.env.ADMIN_IDS.split(',').map((id) => Number(id));
     if (!ctx.senderId || ctx.senderType === 'group' || ADMIN_IDS.includes(ctx.senderId)) {
       return;

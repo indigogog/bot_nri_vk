@@ -19,7 +19,8 @@ export class FirstScene {
     @InjectVkApi()
     private readonly bot: VK,
     private readonly userService: UserService,
-  ) {}
+  ) {
+  }
 
   @SceneEnter()
   async onSceneEnter() {
@@ -116,25 +117,25 @@ export class FirstScene {
       }
 
       default: {
-        if (context.text === 'Назад') {
-          const keyboard = Keyboard.builder();
+        const keyboard = Keyboard.builder();
 
-          if (isAdmin) {
-            keyboard.textButton({
-              label: 'Панель админа',
-              payload: { command: 'toAdmin' },
-              color: ButtonColor.NEGATIVE,
-            });
-          }
-
-          keyboard.row().textButton({ label: 'Афиша', payload: { command: 'toAffiche' }, color: ButtonColor.PRIMARY });
-          keyboard.row().textButton({ label: 'Игры', payload: { command: 'toGames' }, color: ButtonColor.PRIMARY });
-          keyboard.row().textButton({
-            label: 'Заявки на игру',
-            payload: { command: 'toUserRequest' },
-            color: ButtonColor.POSITIVE,
+        if (isAdmin) {
+          keyboard.textButton({
+            label: 'Панель админа',
+            payload: { command: 'toAdmin' },
+            color: ButtonColor.NEGATIVE,
           });
+        }
 
+        keyboard.row().textButton({ label: 'Афиша', payload: { command: 'toAffiche' }, color: ButtonColor.PRIMARY });
+        keyboard.row().textButton({ label: 'Игры', payload: { command: 'toGames' }, color: ButtonColor.PRIMARY });
+        keyboard.row().textButton({
+          label: 'Заявки на игру',
+          payload: { command: 'toUserRequest' },
+          color: ButtonColor.POSITIVE,
+        });
+
+        if (context.text === 'Назад') {
           return context.send('Приветствую странник', { keyboard });
         }
 
@@ -145,6 +146,7 @@ export class FirstScene {
 
         return ctx.send(
           'Упс, видимо на это я не смогу вам ответить, дождитесь ответа админа, либо выберите что-нибудь из списка команд',
+          { keyboard },
         );
       }
     }

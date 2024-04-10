@@ -6,6 +6,7 @@ import { MessagePayloadDecorator } from '../../common/decorators/message-payload
 import { ButtonColor, Keyboard, MessageContext } from 'vk-io';
 import { getDateWithDayOfWeek } from '../../common';
 import * as dayjs from 'dayjs';
+import { UserService } from '../../../main-entities/user/user.service';
 
 export interface DeleteUserRequestMessagePayload {
   [index: string]: string;
@@ -16,8 +17,7 @@ export interface DeleteUserRequestMessagePayload {
 
 @Scene(ScenesNamesEnum.deleteRequest)
 export class DeleteUserRequestScene {
-  constructor(private readonly requestService: UserRequestService) {
-  }
+  constructor(private readonly requestService: UserRequestService, private readonly userService: UserService) {}
 
   @SceneEnter()
   async onSceneEnter() {
@@ -109,8 +109,25 @@ export class DeleteUserRequestScene {
     }
 
     if (context.scene.step.firstTime || !context.text) {
+      const { affiche } = await this.requestService.getUserRequestById(Number(context.scene.state.selectedRequestId));
+
       if (payload.command === 'confirm') {
         await this.requestService.deleteUserRequest(Number(context.scene.state.selectedRequestId));
+      }
+
+      const ADMIN_IDS = process.env.ADMIN_IDS.split(',').map((id) => Number(id));
+      const user = await this.userService.getUser(ctx.senderId);
+
+      for (const adminId of ADMIN_IDS) {
+        await ctx.send(
+          `
+        ОТМЕНА ЗАЯВКИ: \n
+        Игрок: ${user.lastname + ' ' + user.firstname}, https://vk.com/id${ctx.senderId}\n
+        Игра: ${affiche.game.name}\n
+        Дата: ${getDateWithDayOfWeek(dayjs(affiche.dog))}\n
+      `,
+          { user_id: adminId, peer_id: adminId },
+        );
       }
 
       const keyboard = Keyboard.builder()
