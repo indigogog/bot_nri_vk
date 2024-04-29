@@ -4,6 +4,7 @@ import { ButtonColor, Keyboard, MessageContext, VK } from 'vk-io';
 import { VkExceptionFilter } from '../common';
 import { ScenesNamesEnum } from '../scenes/scenes-names.enum';
 import { UserService } from '../../main-entities/user/user.service';
+import * as dayjs from 'dayjs';
 
 @Update()
 @UseFilters(VkExceptionFilter)
@@ -14,8 +15,7 @@ export class EchoUpdate {
     @InjectVkApi()
     private readonly bot: VK,
     private readonly userService: UserService,
-  ) {
-  }
+  ) {}
 
   async checkSubAndUser(ctx: MessageContext) {
     const [group] = await this.bot.api.groups.getById({});
@@ -73,7 +73,7 @@ export class EchoUpdate {
   //   ctx.scene.enter(ScenesNamesEnum.firstScene);
   // }
 
-  @Hears(['Начать', 'start'])
+  @Hears(['Начать', 'start', 'начать'])
   async onStartCommand(@Ctx() ctx: MessageContext) {
     if (ctx.isChat || ctx.peerType === 'chat') {
       return;
@@ -89,6 +89,28 @@ export class EchoUpdate {
       });
       return;
     }
+  }
+
+  @Hears(['Позвать', 'позвать'])
+  async onCallAdmin(@Ctx() ctx: MessageContext) {
+    if (ctx.isChat || ctx.peerType === 'chat') {
+      return;
+    }
+
+    const ADMIN_IDS = process.env.ADMIN_IDS.split(',').map((id) => Number(id));
+
+    for (const adminId of ADMIN_IDS) {
+      await ctx.send(
+        `
+            Вас зовёт пользователь: \n
+            Пользователь: https://vk.com/id${ctx.senderId}\n
+            Дата: ${dayjs().format('DD-MM-YYYY mm:ss')}\n
+          `,
+        { user_id: adminId, peer_id: adminId },
+      );
+    }
+
+    return ctx.send('Администратор в ближайшее время с вами свяжется');
   }
 
   @Hears(['Я подписался'])
@@ -122,6 +144,7 @@ export class EchoUpdate {
     if (!ctx.session.isAuth) {
       ctx.send('Упс, похоже я не могу тебя понять, у меня выпала единичка на кубе при проверке интеллекта');
       ctx.send('Если хотите воспользоваться ботом, напишите "Начать"');
+      ctx.send('Если хотите позвать администратора, напишите "Позвать"');
       return;
     }
 

@@ -24,8 +24,7 @@ export class CreateUserRequestScene {
     private readonly requestService: UserRequestService,
     private readonly afficheService: AfficheService,
     private readonly userService: UserService,
-  ) {
-  }
+  ) {}
 
   @SceneEnter()
   async onSceneEnter() {
@@ -69,6 +68,11 @@ export class CreateUserRequestScene {
       }
 
       keyboard.row().textButton({ label: 'Отмена', payload: { command: 'back' } });
+
+      if (!message.length) {
+        context.send('Упс, похоже актуальных афиш нет');
+        return ctx.scene.enter(ScenesNamesEnum.userRequest);
+      }
 
       await context.send(message.join('\n'));
       return context.send('Выберите игру', { keyboard });

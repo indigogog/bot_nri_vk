@@ -5,11 +5,13 @@ import { ScenesNamesEnum } from './scenes-names.enum';
 import { IsAdminDecorator } from '../common/decorators/is-admin.decorator';
 import { MessagePayloadDecorator } from '../common/decorators/message-payload.decorator';
 import { UserService } from '../../main-entities/user/user.service';
+import { getDateWithDayOfWeek } from '../common';
+import * as dayjs from 'dayjs';
 
 interface BestSceneContextState {
   [index: string]: string;
 
-  command: 'toAdmin' | 'toAffiche' | 'toGames' | 'toUserRequest';
+  command: 'toAdmin' | 'toAffiche' | 'toGames' | 'toUserRequest' | 'callAdmin';
   age: string;
 }
 
@@ -19,8 +21,7 @@ export class FirstScene {
     @InjectVkApi()
     private readonly bot: VK,
     private readonly userService: UserService,
-  ) {
-  }
+  ) {}
 
   @SceneEnter()
   async onSceneEnter() {
@@ -75,6 +76,9 @@ export class FirstScene {
         payload: { command: 'toUserRequest' },
         color: ButtonColor.POSITIVE,
       });
+      keyboard
+        .row()
+        .textButton({ label: 'Позвать администратора', payload: { command: 'callAdmin' }, color: ButtonColor.PRIMARY });
 
       return context.send('Приветствую странник', { keyboard });
     }
@@ -97,6 +101,24 @@ export class FirstScene {
       switcher = payload.command;
     }
 
+    const keyboard = Keyboard.builder();
+
+    if (isAdmin) {
+      keyboard.textButton({
+        label: 'Панель админа',
+        payload: { command: 'toAdmin' },
+        color: ButtonColor.NEGATIVE,
+      });
+    }
+
+    keyboard.row().textButton({ label: 'Афиша', payload: { command: 'toAffiche' }, color: ButtonColor.PRIMARY });
+    keyboard.row().textButton({ label: 'Игры', payload: { command: 'toGames' }, color: ButtonColor.PRIMARY });
+    keyboard.row().textButton({
+      label: 'Заявки на игру',
+      payload: { command: 'toUserRequest' },
+      color: ButtonColor.POSITIVE,
+    });
+
     switch (switcher) {
       case 'toAffiche': {
         return ctx.scene.enter(ScenesNamesEnum.afficheScene);
@@ -115,39 +137,29 @@ export class FirstScene {
       case 'toUserRequest': {
         return ctx.scene.enter(ScenesNamesEnum.userRequest);
       }
+      case 'callAdmin': {
+        const user = await this.userService.getUser(ctx.senderId);
+        const ADMIN_IDS = process.env.ADMIN_IDS.split(',').map((id) => Number(id));
+
+        for (const adminId of ADMIN_IDS) {
+          await ctx.send(
+            `
+            Вас зовёт пользователь: \n
+            Пользователь: ${user.lastname + ' ' + user.firstname}, https://vk.com/id${ctx.senderId}\n
+            Дата: ${dayjs().format('DD-MM-YYYY mm:ss')}\n
+          `,
+            { user_id: adminId, peer_id: adminId },
+          );
+        }
+        return context.send('Администратор в ближайшее время с вами свяжется', { keyboard });
+      }
 
       default: {
-        const keyboard = Keyboard.builder();
-
-        if (isAdmin) {
-          keyboard.textButton({
-            label: 'Панель админа',
-            payload: { command: 'toAdmin' },
-            color: ButtonColor.NEGATIVE,
-          });
-        }
-
-        keyboard.row().textButton({ label: 'Афиша', payload: { command: 'toAffiche' }, color: ButtonColor.PRIMARY });
-        keyboard.row().textButton({ label: 'Игры', payload: { command: 'toGames' }, color: ButtonColor.PRIMARY });
-        keyboard.row().textButton({
-          label: 'Заявки на игру',
-          payload: { command: 'toUserRequest' },
-          color: ButtonColor.POSITIVE,
-        });
-
         if (context.text === 'Назад') {
           return context.send('Приветствую странник', { keyboard });
         }
 
-        const admins = process.env.ADMIN_IDS.split(',').map((id) => Number(id));
-        if (admins.includes(ctx.senderId)) {
-          return;
-        }
-
-        return ctx.send(
-          'Упс, видимо на это я не смогу вам ответить, дождитесь ответа админа, либо выберите что-нибудь из списка команд',
-          { keyboard },
-        );
+        return;
       }
     }
   }

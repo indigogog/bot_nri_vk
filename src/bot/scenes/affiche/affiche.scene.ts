@@ -8,7 +8,7 @@ import { IsAdminDecorator } from '../../common/decorators/is-admin.decorator';
 interface AdminSceneMessagePayload {
   [index: string]: string | number;
 
-  command: 'showCurrentAffiche' | 'createAffiche' | 'back' | 'updateAffiche' | 'deleteAffiche';
+  command: 'showCurrentAffiche' | 'createAffiche' | 'back' | 'updateAffiche' | 'deleteAffiche' | 'toUserRequest';
 }
 
 @Scene(ScenesNamesEnum.afficheScene)
@@ -40,6 +40,8 @@ export class AfficheScene {
       keyboard
         .row()
         .textButton({ label: 'Посмотреть', payload: { command: 'showCurrentAffiche' }, color: ButtonColor.POSITIVE })
+        .row()
+        .textButton({ label: 'Записаться на игру', payload: { command: 'toUserRequest' }, color: ButtonColor.POSITIVE })
         .row()
         .textButton({ label: 'Назад', payload: { command: 'back' }, color: ButtonColor.SECONDARY });
 
@@ -84,6 +86,9 @@ export class AfficheScene {
 
         case 'back':
           return ctx.scene.enter(ScenesNamesEnum.firstScene);
+
+        case 'toUserRequest':
+          return ctx.scene.enter(ScenesNamesEnum.userRequest);
 
         default:
           context.send('Неизвестная команда');
